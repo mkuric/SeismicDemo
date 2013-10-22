@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>500</width>
-    <height>470</height>
+    <width>800</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,16 +19,16 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>480</width>
-      <height>360</height>
+      <width>780</width>
+      <height>490</height>
      </rect>
     </property>
    </widget>
    <widget class="QComboBox" name="channelSetComboBox">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>370</y>
+      <x>0</x>
+      <y>510</y>
       <width>120</width>
       <height>27</height>
      </rect>
@@ -37,8 +37,8 @@
    <widget class="QProgressBar" name="progressBar">
     <property name="geometry">
      <rect>
-      <x>372</x>
-      <y>370</y>
+      <x>680</x>
+      <y>520</y>
       <width>118</width>
       <height>23</height>
      </rect>
@@ -53,8 +53,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>500</width>
-     <height>21</height>
+     <width>800</width>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

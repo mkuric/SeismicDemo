@@ -15,12 +15,21 @@ void generateRandomSeed()
 
 QColor getColor(u_int8_t value)
 {
+    //////////////////////////////////////
+    // Used as Gain = 4. TODO: ...
+    int temp = value*4;
+    if (temp > 255)
+        temp = 255;
+
+    value = temp;
+    //////////////////////////////////////
     QColor orange(255, 128, 0);
     QColor indigo(75, 0, 130);
     QColor violet(148, 0, 211);
 
-    QColor rainbowTable[] = {Qt::red, orange, Qt::yellow, Qt::green, Qt::blue, indigo, violet};
-    const int rainbowTableSize = 7;
+    QColor rainbowTable[] = {Qt::white, Qt::red, Qt::blue, indigo, violet, Qt::black};
+    const int rainbowTableSize = 6;
+
     float step = 256.0f / rainbowTableSize;
 
     float alpha = value / step;

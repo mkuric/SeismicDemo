@@ -46,18 +46,21 @@ void MainWindow::on_actionOpen_triggered()
 void addChannelSetPixmap(const QString &key, ChannelSet<float> *channelSet, Ui::MainWindow *ui)
 {
     QPixmap *pixmap = new QPixmap(nodeNumber, sampleNumber);
-    pixmap->fill(Qt::white);
+    //pixmap->fill(Qt::white);
     QPainter painter(pixmap);
 
     long long total = nodeNumber * sampleNumber;
     long long current = 0;
+    u_int8_t value;
 
     for (int i = 0; i < channelSet->getNodeSize(); i++)
     {
         for (int j = 0; j < channelSet->getSampleSize(); j++)
         {
-
-            u_int8_t value = (*channelSet)[i][j];
+            if ( (*channelSet)[i][j] < 0 )
+                value = -(*channelSet)[i][j];
+            else
+                value = (*channelSet)[i][j];
 
             QPen pointPen(getColor(value));
             pointPen.setWidth(1);
@@ -110,7 +113,7 @@ void readSegdFile(Ui::MainWindow *ui)
 {
     cseis_segd::csSegdReader segdReader;
     // OTVORI FAJL:
-    bool bRes = segdReader.open("/home/mumy/FFID-1481.segd");
+    bool bRes = segdReader.open("/home/ernad/FFID-1481.segd");
 
     // Mislim da je ovo lose ime za funkciju. Ovje procita General Header 1, 2 i "n", sve Channel Sets i external heraders.
     // Cini mi se da na kraju procita i prvi Trace. Bez obzira, njega ne mozemo koristi jer to je jedan od ona 3 prva
@@ -211,8 +214,8 @@ void MainWindow::on_channelSetComboBox_currentIndexChanged(const QString &key)
 
     // Removing previous items
     scene->clear();
-
-    scene->addPixmap(*channelSetPixmap[key]);
+scene->addPixmap(channelSetPixmap[key]->scaled(780, 490, Qt::IgnoreAspectRatio));
+ //   scene->addPixmap(*channelSetPixmap[key]);
 
     ui->progressBar->setValue(100);
 }
