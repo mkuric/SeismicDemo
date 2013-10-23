@@ -16,6 +16,7 @@ const int channelSetNumber = 12;
 const int nodeNumber = 564;
 const int sampleNumber = 4776;
 
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -51,7 +52,7 @@ void addChannelSetPixmap(const QString &key, ChannelSet<float> *channelSet, Ui::
 
     long long total = nodeNumber * sampleNumber;
     long long current = 0;
-    u_int8_t value;
+    uint8_t value;
 
     for (int i = 0; i < channelSet->getNodeSize(); i++)
     {
@@ -113,7 +114,7 @@ void readSegdFile(Ui::MainWindow *ui)
 {
     cseis_segd::csSegdReader segdReader;
     // OTVORI FAJL:
-    bool bRes = segdReader.open("/home/ernad/FFID-1481.segd");
+    bool bRes = segdReader.open("C:\\FFID-1481.segd");
 
     // Mislim da je ovo lose ime za funkciju. Ovje procita General Header 1, 2 i "n", sve Channel Sets i external heraders.
     // Cini mi se da na kraju procita i prvi Trace. Bez obzira, njega ne mozemo koristi jer to je jedan od ona 3 prva
@@ -127,57 +128,27 @@ void readSegdFile(Ui::MainWindow *ui)
     // int aaa = segdReader.numTraces();
 
     // !!! Ovjde ce biti memorisane informacije koje trebamo prikazati !!!!!!!!
-    float** samples = generateSamples<float>(nodeNumber, sampleNumber);
-    //float fMeaurement[564][5000];
+    float fMeasurement[sampleNumber];
 
     // Ova funkcija nece naci nista zato sto cita Channel Set 1 (linija 0) sa 3 specijalne node.
     // "getNextTrace" poziva sebe rekurzivno dok ne nadje nodu cija tipa = 1 (seismic). Ako ne nadje a pregleda
     // sve Traces, returnira.
-    segdReader.getNextTrace(samples[0], comTrcHdr);
+    segdReader.getNextTrace(fMeasurement, comTrcHdr);
 
     // Predji na novu linija sa senzorima:
     segdReader.readNextRecord(comRecHdr);
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // Citamo trace za svaki senozor u ovom ChannelSet-u (564 vertikalnih linija po 4776 mjerenja po 4 bytes)
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    for (int i = 0; i < 564; i++) { // TODO: umjesto 564 bi trebalo procitati broj senzora u ChannelSet header-u
-        segdReader.getNextTrace(samples[i], comTrcHdr);
-    }
-
-    // SADA MOZES KORISTITI fMeasurement da nacrtas graf.
-
-    QString key = "Channel Set 01";
-
-    channelSetMap.insert(key, new ChannelSet<float>(samples, nodeNumber, sampleNumber));
-
-    QMessageBox::information(NULL, "File Read", "SEGD file read!");
-
-    foreach (QString key, channelSetMap.keys())
-    {
-        ui->channelSetComboBox->addItem(key);
-    }
-}
-
-/*
-void generateDummyData(Ui::MainWindow *ui)
-{
-    //TODO: Dynamic allocation checking!
-    long long total = channelSetNumber * nodeNumber * sampleNumber;
-    long long current = 0;
 
     for (int i = 1; i <= channelSetNumber; i++)
     {
-        int** samples = generateSamples(nodeNumber, sampleNumber);
+        float** samples = generateSamples<float>(nodeNumber, sampleNumber);
 
         for (int j = 0; j < nodeNumber; j++)
         {
-            for (int k = 0; k < sampleNumber; k++)
-            {
-                samples[j][k] = randomInteger(0, 255);
-            }
-
-            current += sampleNumber;
-            ui->progressBar->setValue(current * 100 / total);
+            // TODO: umjesto 564 bi trebalo procitati broj senzora u ChannelSet header-u
+            segdReader.getNextTrace(samples[j], comTrcHdr);
         }
 
         QString key;
@@ -190,7 +161,7 @@ void generateDummyData(Ui::MainWindow *ui)
             key = "Channel Set " + QString::number(i);
         }
 
-        channelSetMap.insert(key, new ChannelSet<int>(samples, nodeNumber, sampleNumber));
+        channelSetMap.insert(key, new ChannelSet<float>(samples, nodeNumber, sampleNumber));
     }
 
     QMessageBox::information(NULL, "File Read", "SEGD file read!");
@@ -200,7 +171,6 @@ void generateDummyData(Ui::MainWindow *ui)
         ui->channelSetComboBox->addItem(key);
     }
 }
-*/
 
 void MainWindow::on_channelSetComboBox_currentIndexChanged(const QString &key)
 {
@@ -214,8 +184,8 @@ void MainWindow::on_channelSetComboBox_currentIndexChanged(const QString &key)
 
     // Removing previous items
     scene->clear();
-scene->addPixmap(channelSetPixmap[key]->scaled(780, 490, Qt::IgnoreAspectRatio));
- //   scene->addPixmap(*channelSetPixmap[key]);
+    scene->addPixmap(channelSetPixmap[key]->scaled(780, 490, Qt::IgnoreAspectRatio));
+    //scene->addPixmap(*channelSetPixmap[key]);
 
     ui->progressBar->setValue(100);
 }

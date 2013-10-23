@@ -230,3 +230,5 @@ HEADERS  += mainwindow.h \
     system/cseis_defines.h
 
 FORMS    += mainwindow.ui
+
+QMAKE_CXXFLAGS += -std=gnu++11
