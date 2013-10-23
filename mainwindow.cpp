@@ -52,7 +52,7 @@ void addChannelSetPixmap(const QString &key, ChannelSet<float> *channelSet, Ui::
 
     long long total = nodeNumber * sampleNumber;
     long long current = 0;
-    uint8_t value;
+    u_int8_t value;
 
     for (int i = 0; i < channelSet->getNodeSize(); i++)
     {
@@ -114,7 +114,7 @@ void readSegdFile(Ui::MainWindow *ui)
 {
     cseis_segd::csSegdReader segdReader;
     // OTVORI FAJL:
-    bool bRes = segdReader.open("C:\\FFID-1481.segd");
+    bool bRes = segdReader.open("/home/ernad/FFID-1481.segd");
 
     // Mislim da je ovo lose ime za funkciju. Ovje procita General Header 1, 2 i "n", sve Channel Sets i external heraders.
     // Cini mi se da na kraju procita i prvi Trace. Bez obzira, njega ne mozemo koristi jer to je jedan od ona 3 prva

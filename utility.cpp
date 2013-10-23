@@ -13,7 +13,7 @@ void generateRandomSeed()
 }
 
 
-QColor getColor(uint8_t value)
+QColor getColor(u_int8_t value)
 {
     //////////////////////////////////////
     // Used as Gain = 4. TODO: ...
