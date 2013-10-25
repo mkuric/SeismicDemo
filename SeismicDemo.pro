@@ -107,7 +107,9 @@ SOURCES += main.cpp\
     system/csInitExecEnv.cc \
     system/csExecPhaseDef.cc \
     system/cseis_methods.cc \
-    system/cseis_help.cc
+    system/cseis_help.cc \
+    projection.cpp \
+    segdutility.cpp
 
 HEADERS  += mainwindow.h \
     model.h \
@@ -227,7 +229,9 @@ HEADERS  += mainwindow.h \
     system/csExecPhaseDef.h \
     system/cseis_module_defines.h \
     system/cseis_includes.h \
-    system/cseis_defines.h
+    system/cseis_defines.h \
+    projection.h \
+    segdutility.h
 
 FORMS    += mainwindow.ui
 

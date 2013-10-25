@@ -6,4 +6,5 @@
 void generateRandomSeed();
 int randomInteger(int low, int high);
 QColor getColor(u_int8_t value);
+unsigned int getUintColor(u_int8_t value);
 #endif // UTILITY_H

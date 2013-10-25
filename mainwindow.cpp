@@ -8,13 +8,20 @@
 #include "segd/csSegdReader.h"
 #include "segd/csSegdDefines.h"
 
+#include "segdutility.h"
+#include "projection.h"
+
 // Simulation constants
 QMap<QString, ChannelSet<float>* > channelSetMap;
-QMap<QString, QPixmap*> channelSetPixmap;
+//QMap<QString, QPixmap*> channelSetPixmap;
 
+// TODO: read this from headers
 const int channelSetNumber = 12;
 const int nodeNumber = 564;
 const int sampleNumber = 4776;
+
+int nWidth;
+int nHeight;
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -22,12 +29,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this); //
-    this->setFixedSize(this->size());
+    //this->setFixedSize(this->size());
 
     generateRandomSeed();
 
     scene = new QGraphicsScene(this); 
     ui->graphicsView->setScene(scene);
+    nWidth = ui->graphicsView->width();//780; //this->size().width();
+    nHeight =  ui->graphicsView->height();// 490; //this->size().height();
+    // TODO: change projection after reading of SEGD headers
+    projection = new Projection(0.f, 563.f, 0.f, 4775.f, nWidth, nHeight);
 }
 
 MainWindow::~MainWindow()
@@ -36,7 +47,7 @@ MainWindow::~MainWindow()
 }
 
 void generateDummyData(Ui::MainWindow *ui);
-void readSegdFile(Ui::MainWindow *ui);
+
 void MainWindow::on_actionOpen_triggered()
 {
     //generateDummyData(ui);
@@ -44,110 +55,74 @@ void MainWindow::on_actionOpen_triggered()
     ui->channelSetComboBox->setFocus();
 }
 
-void addChannelSetPixmap(const QString &key, ChannelSet<float> *channelSet, Ui::MainWindow *ui)
+//////////////////////////////////////////////////////////////////////////////////////////
+// Repeaint UI with measurements for this ChannelSet (line with channels)
+//////////////////////////////////////////////////////////////////////////////////////////
+void MainWindow::repaintChannelSet(ChannelSet<float> *channelSet) //, Ui::MainWindow *ui)
 {
-    QPixmap *pixmap = new QPixmap(nodeNumber, sampleNumber);
+    QImage image(nWidth, nHeight, QImage::Format_RGB32);//Format_RGB888); // TODO: not working correct with RGB888
+    //QPixmap *pixmap = new QPixmap(nodeNumber, sampleNumber);
     //pixmap->fill(Qt::white);
-    QPainter painter(pixmap);
+    //QPainter painter(pixmap);
 
-    long long total = nodeNumber * sampleNumber;
+    long long total = nHeight* nWidth; //nodeNumber * sampleNumber;
     long long current = 0;
     u_int8_t value;
 
-    for (int i = 0; i < channelSet->getNodeSize(); i++)
+    float fProjected;
+
+    for (int j = 0; j < nHeight; j++)
     {
-        for (int j = 0; j < channelSet->getSampleSize(); j++)
+        for (int i = 0; i < nWidth; i++)
         {
-            if ( (*channelSet)[i][j] < 0 )
-                value = -(*channelSet)[i][j];
+            fProjected = projection->calculatePixValue(channelSet, i, j);
+
+            if (fProjected < 0)
+                value = - fProjected;
             else
-                value = (*channelSet)[i][j];
+                value = fProjected;
 
-            QPen pointPen(getColor(value));
-            pointPen.setWidth(1);
-
-            painter.setPen(pointPen);
-
-            QPoint point(i, j);
-            painter.drawPoint(point);
+            unsigned int nVal = getUintColor(value);
+            image.setPixel(i, j, nVal);
         }
 
-        current += channelSet->getSampleSize();
-
-        ui->progressBar->setValue(current * 100 / total);
+        //current += channelSet->getSampleSize();
+        //ui->progressBar->setValue(current * 100 / total);
     }
 
-    channelSetPixmap.insert(key, pixmap);
+    scene->clear();
+
+    scene->addPixmap(QPixmap::fromImage(image));
 }
 
-template <typename T>
-T** generateSamples(int nodeSize, int sampleSize)
-{
-    T** samples = 0;
-
-    try
-    {
-        samples = new T*[nodeSize];
-
-        samples[0] = new T[nodeSize * sampleSize];
-
-        for (int i = 1; i < nodeSize; i++)
-        {
-            samples[i] = &samples[0][0] + i * sampleSize;
-        }
-    }
-    catch (std::bad_alloc e)
-    {
-        if (samples != 0)
-        {
-            delete[] samples;
-        }
-
-        throw "Out of memory!";
-    }
-
-    return samples;
-}
-
-
-void readSegdFile(Ui::MainWindow *ui)
+void MainWindow::readSegdFile(Ui::MainWindow *ui)
 {
     cseis_segd::csSegdReader segdReader;
-    // OTVORI FAJL:
+    // Open SEGD file. TODO: "Open File" button
     bool bRes = segdReader.open("/home/ernad/FFID-1481.segd");
 
-    // Mislim da je ovo lose ime za funkciju. Ovje procita General Header 1, 2 i "n", sve Channel Sets i external heraders.
-    // Cini mi se da na kraju procita i prvi Trace. Bez obzira, njega ne mozemo koristi jer to je jedan od ona 3 prva
-    // koji nisu stvarni senzori.
+    // TODO: Not good function name. Function is reading General Header 1, 2 i "n", all Channel Sets i external heraders.
     bRes = segdReader.readNewRecordHeaders();
 
     cseis_segd::commonRecordHeaderStruct comRecHdr;
     cseis_segd::commonTraceHeaderStruct comTrcHdr;
 
-    // Ovo nema nikakve uloge. Samo sam nesto testirao.
-    // int aaa = segdReader.numTraces();
 
-    // !!! Ovjde ce biti memorisane informacije koje trebamo prikazati !!!!!!!!
+    //TODO: we are not using this measurements. Used only for reading first 3 trace (not a sensor measurement).
     float fMeasurement[sampleNumber];
 
-    // Ova funkcija nece naci nista zato sto cita Channel Set 1 (linija 0) sa 3 specijalne node.
-    // "getNextTrace" poziva sebe rekurzivno dok ne nadje nodu cija tipa = 1 (seismic). Ako ne nadje a pregleda
-    // sve Traces, returnira.
     segdReader.getNextTrace(fMeasurement, comTrcHdr);
 
-    // Predji na novu linija sa senzorima:
     segdReader.readNextRecord(comRecHdr);
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // Citamo trace za svaki senozor u ovom ChannelSet-u (564 vertikalnih linija po 4776 mjerenja po 4 bytes)
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Read trace for each node (Channel) in current ChannelSet (564 vertical lines with 4776 measurement(32 bits)
     for (int i = 1; i <= channelSetNumber; i++)
     {
         float** samples = generateSamples<float>(nodeNumber, sampleNumber);
 
         for (int j = 0; j < nodeNumber; j++)
         {
-            // TODO: umjesto 564 bi trebalo procitati broj senzora u ChannelSet header-u
+            // TODO:
             segdReader.getNextTrace(samples[j], comTrcHdr);
         }
 
@@ -176,16 +151,5 @@ void MainWindow::on_channelSetComboBox_currentIndexChanged(const QString &key)
 {
     ui->progressBar->setValue(0);
 
-    // Create pixmap if not present in map
-    if (channelSetPixmap.contains(key) == false)
-    {
-        addChannelSetPixmap(key, channelSetMap[key], ui);
-    }
-
-    // Removing previous items
-    scene->clear();
-    scene->addPixmap(channelSetPixmap[key]->scaled(780, 490, Qt::IgnoreAspectRatio));
-    //scene->addPixmap(*channelSetPixmap[key]);
-
-    ui->progressBar->setValue(100);
+    repaintChannelSet(channelSetMap[key]);
 }
